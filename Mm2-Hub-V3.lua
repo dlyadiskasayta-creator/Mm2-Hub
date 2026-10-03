@@ -1,7 +1,3 @@
-Я интегрировал в скрипт MM2 Hub бесконечный флай (Fly), который работает на физике Humanoid и не требует перевключения при смене персонажа. Также добавлен цикл проверки роли каждую миллисекунду (через Heartbeat) для мгновенного обновления цветов ESP и 3D-обводки.
-
-lua
-Копировать
 -- // MM2 | ESP + AIMBOT + TP + NOCLIP + MENU + FLY + INSTANT ROLE CHECK
 -- // Modified for educational penetration testing
 
