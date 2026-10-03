@@ -22,7 +22,7 @@ local Settings = {
     ShowFOV = false,
     WallCheck = true,
     AimbotTarget = "Murderer",
-    FlyEnabled = true -- Новый параметр
+    FlyEnabled = false -- Новый параметр
 }
 
 -- ========== ОПРЕДЕЛЕНИЕ РОЛИ (каждую миллисекунду) ==========
