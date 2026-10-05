@@ -227,16 +227,13 @@ end
 local GunESPObjects = {}
 local GunESPLines = {}
 
--- 👈 ПРОВЕРКА: пистолет лежит на земле (не в руках игрока)
 local function IsGunOnGround(tool)
     if not tool:IsA("Tool") then return false end
     local parent = tool.Parent
     if not parent then return false end
-    -- Лежит прямо в workspace
     if parent == workspace then return true end
-    -- Лежит в Model внутри workspace (например, оружие на земле)
     if parent:IsA("Model") and parent.Parent == workspace then return true end
-    -- Всё остальное (Character, Backpack) — игнорируем
+    if parent:IsA("Folder") and parent.Parent == workspace then return true end
     return false
 end
 
@@ -245,6 +242,7 @@ local function IsGun(tool)
     if not IsGunOnGround(tool) then return false end
     local n = tool.Name:lower()
     return n:find("gun") or n:find("revolver") or n:find("pistol")
+        or n:find("colt") or n:find("weapon") or n:find("firearm")
 end
 
 local function CreateGunESP(tool)
@@ -310,6 +308,9 @@ end
 
 local function ScanForGuns()
     for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("Tool") then
+            print("[GUN SCAN] Tool:", obj.Name, "| Parent:", obj.Parent and obj.Parent.Name or "nil", "| ParentClass:", obj.Parent and obj.Parent.ClassName or "nil")
+        end
         if IsGun(obj) and not GunESPObjects[obj] then
             CreateGunESP(obj)
         end
@@ -323,15 +324,6 @@ task.spawn(function()
         end
     end
 end)
-
-for _, p in ipairs(Players:GetPlayers()) do CreateESP(p) end
-Players.PlayerAdded:Connect(CreateESP)
-Players.PlayerRemoving:Connect(function(p)
-    if ESPObjects[p] then ESPObjects[p]:Destroy(); ESPObjects[p] = nil end
-    if ESPLines[p] then ESPLines[p]:Destroy(); ESPLines[p] = nil end
-    if Highlights[p] then Highlights[p]:Destroy(); Highlights[p] = nil end
-end)
-
 -- ========== HEARTBEAT ==========
 RunService.Heartbeat:Connect(function()
     UpdateESP()
