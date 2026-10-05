@@ -10,9 +10,9 @@ local CoreGui = game:GetService("CoreGui")
 
 -- ========== НАСТРОЙКИ ==========
 local Settings = {
-    ESPEnabled = true,
+    ESPEnabled = false,
     ESPBoxSize = 1.0,
-    ESPOutline = false,
+    ESPOutline = true,
     ESPLines = false,
     NoclipEnabled = false,
     ShowRoles = true,
@@ -23,9 +23,9 @@ local Settings = {
     WallCheck = true,
     AimbotTarget = "Murderer",
     FlyEnabled = false,
-    GunESPEnabled = false,
-    GunESPColor = Color3.fromRGB(255, 200, 0),   -- 👈 ЦВЕТ ESP ПИСТОЛЕТА
-    GunESPLines = false
+    GunESPEnabled = true,
+    GunESPColor = Color3.fromRGB(255, 215, 0),   -- 👈 ЦВЕТ ESP ПИСТОЛЕТА
+    GunESPLines = true
 }
 
 -- ========== ОПРЕДЕЛЕНИЕ РОЛИ ==========
