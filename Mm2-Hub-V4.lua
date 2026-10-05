@@ -10,9 +10,9 @@ local CoreGui = game:GetService("CoreGui")
 
 -- ========== НАСТРОЙКИ ==========
 local Settings = {
-    ESPEnabled = false,
+    ESPEnabled = true,
     ESPBoxSize = 1.0,
-    ESPOutline = true,
+    ESPOutline = false,
     ESPLines = false,
     NoclipEnabled = false,
     ShowRoles = true,
@@ -23,9 +23,9 @@ local Settings = {
     WallCheck = true,
     AimbotTarget = "Murderer",
     FlyEnabled = false,
-    GunESPEnabled = true,
-    GunESPColor = Color3.fromRGB(255, 215, 0),   -- 👈 ЦВЕТ ESP ПИСТОЛЕТА
-    GunESPLines = true
+    GunESPEnabled = false,
+    GunESPColor = Color3.fromRGB(255, 215, 0),   -- 👈 ЗОЛОТОЙ
+    GunESPLines = false
 }
 
 -- ========== ОПРЕДЕЛЕНИЕ РОЛИ ==========
@@ -227,8 +227,22 @@ end
 local GunESPObjects = {}
 local GunESPLines = {}
 
+-- 👈 ПРОВЕРКА: пистолет лежит на земле (не в руках игрока)
+local function IsGunOnGround(tool)
+    if not tool:IsA("Tool") then return false end
+    local parent = tool.Parent
+    if not parent then return false end
+    -- Лежит прямо в workspace
+    if parent == workspace then return true end
+    -- Лежит в Model внутри workspace (например, оружие на земле)
+    if parent:IsA("Model") and parent.Parent == workspace then return true end
+    -- Всё остальное (Character, Backpack) — игнорируем
+    return false
+end
+
 local function IsGun(tool)
     if not tool:IsA("Tool") then return false end
+    if not IsGunOnGround(tool) then return false end
     local n = tool.Name:lower()
     return n:find("gun") or n:find("revolver") or n:find("pistol")
 end
@@ -257,7 +271,7 @@ local function UpdateGunESP()
     end
 
     for tool, box in pairs(GunESPObjects) do
-        if tool and tool.Parent then
+        if tool and tool.Parent and IsGunOnGround(tool) then
             local handle = tool:FindFirstChild("Handle")
             if handle then
                 local sp, onScreen = Camera:WorldToViewportPoint(handle.Position)
@@ -290,14 +304,6 @@ local function UpdateGunESP()
         else
             box.Visible = false
             GunESPLines[tool].Visible = false
-            if GunESPObjects[tool] then
-                GunESPObjects[tool]:Destroy()
-                GunESPObjects[tool] = nil
-            end
-            if GunESPLines[tool] then
-                GunESPLines[tool]:Destroy()
-                GunESPLines[tool] = nil
-            end
         end
     end
 end
@@ -410,27 +416,27 @@ end)
 local function TeleportToGun()
     local gun = nil
     for _, obj in ipairs(workspace:GetDescendants()) do
-        if obj:IsA("Tool") and (obj.Name:lower():find("gun") or obj.Name:lower():find("revolver")) then
+        if obj:IsA("Tool") and IsGunOnGround(obj)
+            and (obj.Name:lower():find("gun") or obj.Name:lower():find("revolver")) then
             gun = obj
             break
         end
     end
-    if gun and gun.Parent and gun.Parent:IsA("Model") then
+    if gun and gun.Parent then
         local myChar = LocalPlayer.Character
         if myChar and myChar:FindFirstChild("HumanoidRootPart") then
-            myChar.HumanoidRootPart.CFrame = gun.Parent:GetModelCFrame() + Vector3.new(0, 3, 0)
-        end
-    elseif gun and gun.Parent and gun.Parent:IsA("BasePart") then
-        local myChar = LocalPlayer.Character
-        if myChar and myChar:FindFirstChild("HumanoidRootPart") then
-            myChar.HumanoidRootPart.CFrame = gun.Parent.CFrame + Vector3.new(0, 3, 0)
+            if gun.Parent:IsA("Model") then
+                myChar.HumanoidRootPart.CFrame = gun.Parent:GetModelCFrame() + Vector3.new(0, 3, 0)
+            elseif gun.Parent:IsA("BasePart") then
+                myChar.HumanoidRootPart.CFrame = gun.Parent.CFrame + Vector3.new(0, 3, 0)
+            end
         end
     end
 end
 
 -- ========== МЕНЮ ==========
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "MM2_Hub"   -- 👈 МЕНЯЙ ЗДЕСЬ (внутреннее имя)
+ScreenGui.Name = "MM2_Hub"   -- 👈 МЕНЯЙ ЗДЕСЬ
 ScreenGui.Parent = CoreGui
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
@@ -456,7 +462,7 @@ Gradient.Parent = Main
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 40)
 Title.BackgroundColor3 = Color3.fromRGB(70, 50, 120)
-Title.Text = "⚡ MM2 HUB (Experimental)"   -- 👈 МЕНЯЙ ЗДЕСЬ (название на экране)
+Title.Text = "⚡ MM2 HUB (Fly + Gun ESP)"   -- 👈 МЕНЯЙ ЗДЕСЬ
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 15
@@ -549,7 +555,7 @@ local function CreateSlider(text, y, min, max, default, callback)
     fill.Parent = slider
     Instance.new("UICorner", fill).CornerRadius = UDim.new(0, 4)
 
-    local dragging = false
+        local dragging = false
     local function update(input)
         local rel = math.clamp((input.Position.X - slider.AbsolutePosition.X)/slider.AbsoluteSize.X, 0, 1)
         local v = math.floor(min + (max-min)*rel)
@@ -590,7 +596,7 @@ local function ShowVisualTab()
             UserInputService:SendInput(Enum.UserInputType.Keyboard, Enum.KeyCode.F, Enum.UserInputState.Begin)
         end
     end)
-    CreateToggle("ESP на пистолет", 250, Settings.GunESPEnabled, function(s)
+    CreateToggle("ESP на пистолет (лежащий)", 250, Settings.GunESPEnabled, function(s)
         Settings.GunESPEnabled = s
         if s then ScanForGuns() end
     end)
@@ -764,16 +770,16 @@ local function CreateTabButton(text, x, width, callback)
     return btn
 end
 
-VisualTabBtn = CreateTabButton("ВИЗУАЛ", 0, 65, function()       -- 👈 НАЗВАНИЕ ВКЛАДКИ
+VisualTabBtn = CreateTabButton("ВИЗУАЛ", 0, 65, function()
     SetTabColors("visual"); ShowVisualTab()
 end)
-AimbotTabBtn = CreateTabButton("AIMBOT", 70, 65, function()       -- 👈 НАЗВАНИЕ ВКЛАДКИ
+AimbotTabBtn = CreateTabButton("AIMBOT", 70, 65, function()
     SetTabColors("aimbot"); ShowAimbotTab()
 end)
-MoveTabBtn = CreateTabButton("ДВИЖ", 140, 65, function()          -- 👈 НАЗВАНИЕ ВКЛАДКИ
+MoveTabBtn = CreateTabButton("ДВИЖ", 140, 65, function()
     SetTabColors("move"); ShowMoveTab()
 end)
-PlayersTabBtn = CreateTabButton("ИГРОКИ", 210, 65, function()     -- 👈 НАЗВАНИЕ ВКЛАДКИ
+PlayersTabBtn = CreateTabButton("ИГРОКИ", 210, 65, function()
     SetTabColors("players"); ShowPlayersTab()
 end)
 
@@ -782,7 +788,7 @@ local OpenBtn = Instance.new("TextButton")
 OpenBtn.Size = UDim2.new(0, 120, 0, 30)
 OpenBtn.Position = UDim2.new(0.5, -60, 0, 10)
 OpenBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-OpenBtn.Text = "§ Open §"   -- 👈 МЕНЯЙ ЗДЕСЬ (текст кнопки при сворачивании)
+OpenBtn.Text = "⚡ ОТКРЫТЬ"
 OpenBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 OpenBtn.Font = Enum.Font.GothamBold
 OpenBtn.TextSize = 12
