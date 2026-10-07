@@ -949,7 +949,7 @@ local function StartMainScript()
     -- ========== ХОТКЕИ (ПК) ==========
     UserInputService.InputBegan:Connect(function(input, gp)
         if gp then return end
-        if input.KeyCode == Enum.KeyCode.RightShift then
+        if input.KeyCode == Enum.KeyCode.Insert then
             menuOpen = not menuOpen
             Main.Visible = menuOpen
             OpenBtn.Visible = not menuOpen
