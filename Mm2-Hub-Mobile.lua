@@ -45,14 +45,35 @@ local Settings = {
 }
 
 -- ============================================================
--- HWID
+-- HWID (несколько источников, для Delta Mobile)
 -- ============================================================
 local function getHWID()
+    -- Способ 1: RbxAnalyticsService (работает на ПК, редко на мобиле)
     local ok, result = pcall(function()
         return game:GetService("RbxAnalyticsService"):GetClientId()
     end)
-    if ok and result then return result end
-    return tostring(game.PlaceId) .. "_" .. tostring(game.JobId):sub(1, 8)
+    if ok and result and tostring(result) ~= "" and result ~= nil then
+        return tostring(result)
+    end
+
+    -- Способ 2: UserId + PlaceId (уникально для игрока)
+    local ok2, userId = pcall(function()
+        return LocalPlayer.UserId
+    end)
+    if ok2 and userId then
+        return "U" .. tostring(userId) .. "_P" .. tostring(game.PlaceId)
+    end
+
+    -- Способ 3: JobId (уникален для сервера, но стабилен в рамках сессии)
+    local ok3, jobId = pcall(function()
+        return tostring(game.JobId)
+    end)
+    if ok3 and jobId and #jobId > 5 then
+        return "J" .. jobId:sub(1, 16)
+    end
+
+    -- Способ 4: Фоллбек (не должен срабатывать, но на всякий)
+    return "unknown_" .. tostring(tick()):sub(1, 10)
 end
 
 -- ============================================================
